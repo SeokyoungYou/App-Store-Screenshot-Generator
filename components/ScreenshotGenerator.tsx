@@ -7,6 +7,7 @@ import GeneratedImage from './GeneratedImage';
 import Spinner from './Spinner';
 import ColorInput from './ColorInput';
 import { generateScreenshot, generateTextOverlays } from '../services/geminiService';
+import { getImageDimensions } from '../utils/imageUtils';
 
 const fileToBase64 = (file: File): Promise<{ base64: string; mimeType: string }> => {
   return new Promise((resolve, reject) => {
@@ -36,8 +37,8 @@ type PresetOption = {
 const presetOptions: PresetOption[] = [
   { value: '1290x2796', label: 'iPhone', details: '6.9"', isLandscape: false },
   { value: '2796x1290', label: 'iPhone', details: '6.9"', isLandscape: true },
-  { value: '2064x2752', label: 'iPad', details: '13"', isLandscape: false },
-  { value: '2752x2064', label: 'iPad', details: '13"', isLandscape: true },
+  { value: '2048x2732', label: 'iPad', details: '12.9"', isLandscape: false },
+  { value: '2732x2048', label: 'iPad', details: '12.9"', isLandscape: true },
   { value: '1620x2880', label: '9:16' },
   { value: '2880x1620', label: '16:9' },
   { value: '2160x2880', label: '3:4' },
@@ -65,6 +66,11 @@ const DeviceIcon: React.FC<{ isLandscape: boolean }> = ({ isLandscape }) => {
   );
 };
 
+interface GeneratedImageData {
+    base64: string;
+    actualWidth: number;
+    actualHeight: number;
+}
 
 const ScreenshotGenerator: React.FC = () => {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -76,7 +82,7 @@ const ScreenshotGenerator: React.FC = () => {
   const [backgroundColor, setBackgroundColor] = useState<string>('');
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<GeneratedImageData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [isGeneratingText, setIsGeneratingText] = useState<boolean>(false);
@@ -113,12 +119,21 @@ const ScreenshotGenerator: React.FC = () => {
       return;
     }
     
-    if (!width || !height || isNaN(Number(width)) || isNaN(Number(height)) || Number(width) <= 0 || Number(height) <= 0) {
+    const targetWidth = Number(width);
+    const targetHeight = Number(height);
+    if (isNaN(targetWidth) || isNaN(targetHeight) || targetWidth <= 0 || targetHeight <= 0) {
         setError('Please enter valid, positive numeric values for resolution.');
         return;
     }
     
-    const finalResolution = `${width}x${height}`;
+    // The user-selected final resolution
+    const targetResolution = `${targetWidth}x${targetHeight}`;
+    
+    // The resolution for the AI model (1/3 size) for faster, more reliable generation
+    const generationWidth = Math.round(targetWidth / 3);
+    const generationHeight = Math.round(targetHeight / 3);
+    const generationResolution = `${generationWidth}x${generationHeight}`;
+
 
     setIsLoading(true);
     setError(null);
@@ -133,11 +148,19 @@ const ScreenshotGenerator: React.FC = () => {
         headline,
         subheadline,
         appFeatures,
-        finalResolution,
+        generationResolution, // Generate at 1/3 resolution
+        targetResolution, // Pass full resolution for device detection
         backgroundColor
       );
+      
+      const { width: actualWidth, height: actualHeight } = await getImageDimensions(resultBase64);
 
-      setGeneratedImage(resultBase64);
+      setGeneratedImage({
+        base64: resultBase64,
+        actualWidth,
+        actualHeight,
+      });
+
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred while generating the image.');
@@ -280,14 +303,21 @@ const ScreenshotGenerator: React.FC = () => {
           {/* Right Column: Output */}
           <div className="bg-gray-900/50 rounded-lg p-4 flex items-center justify-center min-h-[300px] md:min-h-full border border-gray-700">
             {isLoading && (
-              <div className="text-center">
+              <div className="flex flex-col items-center text-center">
                   <Spinner large={true} />
                   <p className="mt-4 text-gray-400">Generating your screenshot...</p>
                   <p className="text-xs text-gray-500 mt-2">This may take a moment.</p>
               </div>
             )}
             {error && !isLoading && <p className="text-red-400 text-center">{error}</p>}
-            {generatedImage && <GeneratedImage base64Image={generatedImage} resolution={finalResolution} />}
+            {generatedImage && (
+              <GeneratedImage 
+                base64Image={generatedImage.base64} 
+                requestedResolution={finalResolution}
+                actualWidth={generatedImage.actualWidth}
+                actualHeight={generatedImage.actualHeight}
+              />
+            )}
             {!isLoading && !generatedImage && !error && (
                 <div className="text-center text-gray-500">
                     <p>Your generated screenshot will appear here.</p>

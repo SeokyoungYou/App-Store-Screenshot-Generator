@@ -1,7 +1,4 @@
 # App Store Screenshot Generator
-![Sep-05-2025 23-01-07](https://github.com/user-attachments/assets/124b9e9e-0878-482c-9d2c-c8276de7a21b)
-
-
 
 This web application leverages Google's Gemini AI to generate professional-grade App Store screenshots. Users can upload their app UI screenshots, describe key features, and let the AI create marketing images complete with premium gradient backgrounds and compelling text overlays. The final output is designed to be compliant with App Store policies.
 
