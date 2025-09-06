@@ -1,5 +1,5 @@
 # App Store Screenshot Generator
-![Sep-05-2025 23-00-25](https://github.com/user-attachments/assets/936ecf44-21ad-41bd-b2b6-28b7c1b986ba)
+![Sep-05-2025 23-01-07](https://github.com/user-attachments/assets/124b9e9e-0878-482c-9d2c-c8276de7a21b)
 
 
 
