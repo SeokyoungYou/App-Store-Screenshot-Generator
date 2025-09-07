@@ -1,62 +1,48 @@
-import React, { useState } from 'react';
-import { resizeImageBase64 } from '../utils/imageUtils';
+import React from 'react';
 import Spinner from './Spinner';
 
 interface GeneratedImageProps {
   base64Image: string;
-  requestedResolution: string; // The user's target resolution, e.g., "1290x2796"
-  actualWidth: number;   // The actual width of the generated (smaller) image
-  actualHeight: number;  // The actual height of the generated (smaller) image
+  requestedResolution: string;
+  onPreviewClick: () => void;
+  onDownloadClick: () => void;
+  isUpscaling: boolean;
 }
 
-const GeneratedImage: React.FC<GeneratedImageProps> = ({ base64Image, requestedResolution, actualWidth, actualHeight }) => {
-  const [isUpscaling, setIsUpscaling] = useState(false);
+const GeneratedImage: React.FC<GeneratedImageProps> = ({ 
+  base64Image, 
+  requestedResolution, 
+  onPreviewClick, 
+  onDownloadClick, 
+  isUpscaling 
+}) => {
   const imageUrl = `data:image/png;base64,${base64Image}`;
-  
   const [targetWidth, targetHeight] = requestedResolution.split('x').map(Number);
-  const aspectRatio = targetWidth && targetHeight ? `${targetWidth} / ${targetHeight}` : `${actualWidth} / ${actualHeight}`;
-
-  const handleDownload = async () => {
-    setIsUpscaling(true);
-    try {
-        const upscaledDataUrl = await resizeImageBase64(base64Image, targetWidth, targetHeight);
-        const link = document.createElement('a');
-        link.href = upscaledDataUrl;
-        link.download = `app-store-screenshot-${targetWidth}x${targetHeight}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (error) {
-        console.error("Failed to upscale and download image:", error);
-        // Optionally, show an error message to the user here
-    } finally {
-        setIsUpscaling(false);
-    }
-  };
-
 
   return (
-    <div className="space-y-4 w-full">
-      <div
-        className="w-full bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center relative"
-        style={{ aspectRatio: aspectRatio }}
+    <div className="space-y-2 w-full">
+      <div 
+        onClick={onPreviewClick}
+        onKeyPress={(e) => e.key === 'Enter' && onPreviewClick()}
+        className="w-full aspect-square bg-gray-700/50 rounded-lg overflow-hidden flex items-center justify-center relative cursor-pointer group border border-gray-700 hover:border-purple-500 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500"
+        role="button"
+        tabIndex={0}
+        aria-label={`Preview screenshot for size ${requestedResolution}`}
       >
-        <img src={imageUrl} alt="Generated App Store Screenshot" className="w-full h-full object-contain" />
-        <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-md font-mono">
-          Preview: {actualWidth}x{actualHeight}px
+        <img src={imageUrl} alt={`Generated screenshot for ${requestedResolution}`} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105" />
+        <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
         </div>
-      </div>
-      
-      <div className="p-3 bg-blue-900/50 border border-blue-700 text-blue-300 text-xs rounded-md" role="alert">
-          <p><span className="font-bold">Note:</span> A smaller preview is generated for speed. The final image will be downloaded at your selected high resolution ({targetWidth}x{targetHeight}px) via upscaling.</p>
       </div>
 
       <button
-        onClick={handleDownload}
+        onClick={onDownloadClick}
         disabled={isUpscaling}
-        className={`w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white transition-colors bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={`w-full flex items-center justify-center px-2 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white transition-colors bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed`}
       >
-        {isUpscaling ? <><Spinner /> <span className="ml-2">Upscaling...</span></> : `Download (${targetWidth}x${targetHeight} PNG)`}
+        {isUpscaling ? <><Spinner /> <span className="ml-2">Upscaling...</span></> : `Download ${targetWidth}x${targetHeight}`}
       </button>
     </div>
   );

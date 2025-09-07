@@ -3,14 +3,18 @@ import React from 'react';
 interface TextAreaInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   id: string;
+  cornerComponent?: React.ReactNode;
 }
 
-const TextAreaInput: React.FC<TextAreaInputProps> = ({ label, id, ...props }) => {
+const TextAreaInput: React.FC<TextAreaInputProps> = ({ label, id, cornerComponent, ...props }) => {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">
-        {label}
-      </label>
+      <div className="flex justify-between items-center mb-1">
+        <label htmlFor={id} className="block text-sm font-medium text-gray-300">
+          {label}
+        </label>
+        {cornerComponent}
+      </div>
       <textarea
         id={id}
         rows={4}
