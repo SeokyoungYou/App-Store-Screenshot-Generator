@@ -1,5 +1,5 @@
 {
-  "name": "App Store Screenshot Generator",
+  "name": "AI Media Generator for App",
   "description": "Generate professional, policy-compliant App Store screenshots for your application using Gemini. Upload your UI, add text, and let the AI create stunning, high-resolution promotional images with premium gradient backgrounds.",
   "requestFramePermissions": []
 }

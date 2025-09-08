@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import ImageInput from './ImageInput';
 import TextInput from './TextInput';
@@ -32,7 +33,7 @@ const purposeOptions: { id: Purpose; label: string; description: string }[] = [
     { id: 'app-store', label: 'App Store', description: 'iPhone & iPad screenshots' },
     { id: 'social-media', label: 'Social Media', description: 'Posts for Instagram, X, etc.' },
     { id: 'og-image', label: 'OG Image', description: 'Link previews for websites' },
-    { id: 'custom', label: 'Custom', description: 'Manually configure everything' }
+    { id: 'custom', label: 'Custom', description: 'Manually configure images' }
 ];
 
 type SocialPlatform = 'instagram-post' | 'instagram-story' | 'x-threads';
@@ -129,33 +130,32 @@ const ScreenshotGenerator: React.FC = () => {
   const isOG = purpose === 'og-image';
 
   useEffect(() => {
-    // Reset text fields and errors when purpose changes
+    // Reset fields and errors when purpose changes
     setHeadline('');
     setSubheadline('');
     setSocialPost(null);
     setTextError(null);
     setError(null);
-    // When switching to OG, clear app features if user hasn't typed anything yet,
-    // otherwise keep it for context.
+    setGeneratedImages(null);
+    
     if(purpose === 'og-image' && appFeatures === '') {
         setAppFeatures('');
     }
-
 
     switch (purpose) {
       case 'app-store':
         setSelectedSizes(['1290x2796', '2048x2732']);
         break;
       case 'social-media':
-        const defaultPlatform = socialPlatformOptions[0]; // Default to Instagram Post
+        const defaultPlatform = socialPlatformOptions[0];
         setSocialPlatform(defaultPlatform.id);
         setSelectedSizes(defaultPlatform.sizes);
         break;
       case 'og-image':
-        setSelectedSizes(['1200x630']); // Standard OG image size
+        setSelectedSizes(['1200x630']);
         break;
       case 'custom':
-        setSelectedSizes(['1290x2796']); // Default to one size for custom
+        setSelectedSizes(['1290x2796']);
         break;
       default:
         setSelectedSizes([]);
@@ -198,16 +198,20 @@ const ScreenshotGenerator: React.FC = () => {
   const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
     if (!screenshotFile) {
-      setError('Please upload a screenshot to improve.');
-      return;
-    }
-    if (selectedSizes.length === 0) {
-      setError('Please select at least one output size.');
+      setError('Please upload a screenshot.');
       return;
     }
 
     setIsLoading(true);
     setError(null);
+    setGeneratedImages(null);
+
+    if (selectedSizes.length === 0) {
+      setError('Please select at least one output size.');
+      setIsLoading(false);
+      return;
+    }
+
     setGeneratedImages(
       selectedSizes.map(res => ({
         requestedResolution: res,
@@ -225,12 +229,9 @@ const ScreenshotGenerator: React.FC = () => {
               throw new Error(`Invalid resolution: ${resolution}`);
           }
 
-          // Generate a half-resolution preview for speed. The final download will be upscaled.
           let generationWidth = Math.round(targetWidth / 2);
           let generationHeight = Math.round(targetHeight / 2);
           
-          // For OG images, generate at the full target resolution for maximum quality,
-          // as these are critical for sharp link previews.
           if (purpose === 'og-image') {
               generationWidth = targetWidth;
               generationHeight = targetHeight;
@@ -337,7 +338,7 @@ const ScreenshotGenerator: React.FC = () => {
     for (const image of successfulImages) {
         if (image.base64) {
             await handleDownload(image);
-            await new Promise(resolve => setTimeout(resolve, 500)); // Stagger downloads
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
     setIsDownloadingAll(false);
@@ -357,7 +358,6 @@ const ScreenshotGenerator: React.FC = () => {
     }
   }, [socialPost]);
 
-  const isSocial = purpose === 'social-media';
   const generateButtonText = isOG
     ? '6. Generate OG Image'
     : `6. Generate ${selectedSizes.length} Image${selectedSizes.length > 1 ? 's' : ''}`;
@@ -422,13 +422,12 @@ const ScreenshotGenerator: React.FC = () => {
             <div>
               <TextAreaInput
                 id="features"
-                label="3. Describe Feature &amp; Generate Text"
+                label={"3. Describe Feature & Generate Text"}
                 value={appFeatures}
                 onChange={(e) => setAppFeatures(e.target.value)}
                 onKeyDown={handleFeaturesKeyDown}
-                placeholder="Optional: Describe the feature shown for better AI context."
-                cornerComponent={
-                  <select
+                placeholder={"Optional: Describe the feature shown for better AI context."}
+                cornerComponent={(<select
                       id="language"
                       value={language}
                       onChange={(e) => setLanguage(e.target.value)}
@@ -436,122 +435,126 @@ const ScreenshotGenerator: React.FC = () => {
                       aria-label="Select generation language"
                   >
                       {languageOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
+                  </select>)
                 }
               />
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleGenerateText}
-                  disabled={isGeneratingText || !appFeatures.trim()}
-                  className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500"
-                >
-                  {isGeneratingText ? <><Spinner /> <span className="ml-2">Generating...</span></> : 'Generate Text'}
-                </button>
-              </div>
-              {textError && <p className="mt-2 text-sm text-red-400">{textError}</p>}
-
-              <div className="mt-4 space-y-4">
-                <TextInput
-                  id="headline"
-                  label="Headline"
-                  placeholder="A key feature."
-                  value={headline}
-                  onChange={(e) => setHeadline(e.target.value)}
-                  required
-                />
-                <TextInput
-                  id="subheadline"
-                  label="Sub-headline (Optional)"
-                  value={subheadline}
-                  onChange={(e) => setSubheadline(e.target.value)}
-                  placeholder="A compelling one-liner about this feature."
-                />
-              </div>
-            </div>
-
-            <div>
-              <ColorInput
-                id="backgroundColor"
-                label="4. Set Solid Background Color (Optional)"
-                value={backgroundColor}
-                onChange={setBackgroundColor}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                5. Select Output Sizes
-              </label>
-              {isOG ? (
-                 <div className="bg-gray-900/40 p-4 rounded-lg mt-2 border border-gray-700 text-center">
-                    <p className="text-sm text-gray-300">
-                        OG Image size is automatically set to <span className="font-semibold text-white">1200x630</span> for optimal link previews.
-                    </p>
-                 </div>
-              ) : (
                 <>
-                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mb-3">
-                    {presetOptions.map(opt => {
-                      const isActive = selectedSizes.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => handlePresetToggle(opt.value)}
-                          className={`flex flex-col items-center justify-center text-center p-2 rounded-md border text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 space-y-2 h-full
-                            ${isActive
-                              ? 'bg-purple-600 border-purple-500 text-white shadow-lg'
-                              : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700'
-                            }`
-                          }
-                        >
-                          <div className="h-10 flex items-center justify-center">
-                            {opt.details ? (
-                              <DeviceIcon isLandscape={opt.isLandscape as boolean} />
-                            ) : (
-                              <RatioIcon ratio={opt.label} />
-                            )}
-                          </div>
-                          <div className="flex flex-col leading-tight">
-                            <span className="font-semibold block text-xs">
-                              {opt.details ? `${opt.label} ${opt.details}` : opt.label}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="bg-gray-900/40 p-3 rounded-lg mt-4 border border-gray-700">
-                    <label className="block text-xs font-medium text-gray-400 mb-2">Add a custom size</label>
-                    <div className="grid grid-cols-2 gap-2 items-end">
-                      <TextInput id="customWidth" label="Width" type="number" value={customWidth} onChange={(e) => setCustomWidth(e.target.value)} placeholder="e.g., 1080" />
-                      <TextInput id="customHeight" label="Height" type="number" value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} placeholder="e.g., 1920" />
-                    </div>
-                    <button type="button" onClick={handleAddCustomSize} disabled={!customWidth || !customHeight} className="w-full mt-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500">
-                      Add Custom Size
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleGenerateText}
+                      disabled={isGeneratingText || !appFeatures.trim()}
+                      className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500"
+                    >
+                      {isGeneratingText ? <><Spinner /> <span className="ml-2">Generating...</span></> : 'Generate Text'}
                     </button>
                   </div>
+                  {textError && <p className="mt-2 text-sm text-red-400">{textError}</p>}
 
-                  {selectedSizes.length > 0 && (
-                    <div className="mt-4">
-                      <label className="block text-xs font-medium text-gray-400 mb-2">To be generated:</label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedSizes.map(size => (
-                          <span key={size} className="flex items-center bg-gray-700 text-gray-200 text-xs font-medium pl-3 pr-2 py-1 rounded-full">
-                            {size}
-                            <button type="button" onClick={() => handleRemoveSize(size)} className="ml-2 -mr-1 p-0.5 text-gray-400 hover:text-white rounded-full hover:bg-gray-600 transition-colors" aria-label={`Remove size ${size}`}>
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="mt-4 space-y-4">
+                    <TextInput
+                      id="headline"
+                      label="Headline"
+                      placeholder="A key feature."
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      required
+                    />
+                    <TextInput
+                      id="subheadline"
+                      label="Sub-headline (Optional)"
+                      value={subheadline}
+                      onChange={(e) => setSubheadline(e.target.value)}
+                      placeholder="A compelling one-liner about this feature."
+                    />
+                  </div>
                 </>
-              )}
             </div>
             
+            <>
+              <div>
+                <ColorInput
+                  id="backgroundColor"
+                  label="4. Set Solid Background Color (Optional)"
+                  value={backgroundColor}
+                  onChange={setBackgroundColor}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  5. Select Output Sizes
+                </label>
+                {isOG ? (
+                  <div className="bg-gray-900/40 p-4 rounded-lg mt-2 border border-gray-700 text-center">
+                      <p className="text-sm text-gray-300">
+                          OG Image size is automatically set to <span className="font-semibold text-white">1200x630</span> for optimal link previews.
+                      </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mb-3">
+                      {presetOptions.map(opt => {
+                        const isActive = selectedSizes.includes(opt.value);
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => handlePresetToggle(opt.value)}
+                            className={`flex flex-col items-center justify-center text-center p-2 rounded-md border text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 space-y-2 h-full
+                              ${isActive
+                                ? 'bg-purple-600 border-purple-500 text-white shadow-lg'
+                                : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700'
+                              }`
+                            }
+                          >
+                            <div className="h-10 flex items-center justify-center">
+                              {opt.details ? (
+                                <DeviceIcon isLandscape={opt.isLandscape as boolean} />
+                              ) : (
+                                <RatioIcon ratio={opt.label} />
+                              )}
+                            </div>
+                            <div className="flex flex-col leading-tight">
+                              <span className="font-semibold block text-xs">
+                                {opt.details ? `${opt.label} ${opt.details}` : opt.label}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="bg-gray-900/40 p-3 rounded-lg mt-4 border border-gray-700">
+                      <label className="block text-xs font-medium text-gray-400 mb-2">Add a custom size</label>
+                      <div className="grid grid-cols-2 gap-2 items-end">
+                        <TextInput id="customWidth" label="Width" type="number" value={customWidth} onChange={(e) => setCustomWidth(e.target.value)} placeholder="e.g., 1080" />
+                        <TextInput id="customHeight" label="Height" type="number" value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} placeholder="e.g., 1920" />
+                      </div>
+                      <button type="button" onClick={handleAddCustomSize} disabled={!customWidth || !customHeight} className="w-full mt-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500">
+                        Add Custom Size
+                      </button>
+                    </div>
+
+                    {selectedSizes.length > 0 && (
+                      <div className="mt-4">
+                        <label className="block text-xs font-medium text-gray-400 mb-2">To be generated:</label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedSizes.map(size => (
+                            <span key={size} className="flex items-center bg-gray-700 text-gray-200 text-xs font-medium pl-3 pr-2 py-1 rounded-full">
+                              {size}
+                              <button type="button" onClick={() => handleRemoveSize(size)} className="ml-2 -mr-1 p-0.5 text-gray-400 hover:text-white rounded-full hover:bg-gray-600 transition-colors" aria-label={`Remove size ${size}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
+
             <div className="pt-4">
               <Button type="submit" disabled={isLoading || !screenshotFile || selectedSizes.length === 0}>
                 {isLoading ? <Spinner /> : generateButtonText}
@@ -650,7 +653,7 @@ const ScreenshotGenerator: React.FC = () => {
                         {error ? (
                         <p className="text-red-400">{error}</p>
                         ) : (
-                        <p>Your generated screenshots will appear here.</p>
+                        <p>Your generated content will appear here.</p>
                         )}
                     </div>
                     )}
