@@ -38,7 +38,7 @@ const purposeOptions: { id: Purpose; label: string; description: string }[] = [
 type SocialPlatform = 'instagram-post' | 'instagram-story' | 'x-threads';
 
 const socialPlatformOptions: { id: SocialPlatform; label: string; description: string; sizes: string[] }[] = [
-    { id: 'instagram-post', label: 'Instagram Post', description: 'Square & Portrait', sizes: ['2880x2880', '2160x2880'] },
+    { id: 'instagram-post', label: 'Instagram Post', description: 'Square & Portrait', sizes: ['2880x2880', '2160x2700'] },
     { id: 'instagram-story', label: 'Instagram Story', description: 'Vertical (9:16)', sizes: ['1620x2880'] },
     { id: 'x-threads', label: 'X / Threads', description: 'Square & Wide', sizes: ['2880x2880', '2880x1620'] }
 ];
@@ -58,7 +58,7 @@ const presetOptions: PresetOption[] = [
   { value: '2732x2048', label: 'iPad', details: '12.9"', isLandscape: true },
   { value: '1620x2880', label: '9:16' },
   { value: '2880x1620', label: '16:9' },
-  { value: '2160x2880', label: '3:4' },
+  { value: '2160x2700', label: '4:5' },
   { value: '2880x2160', label: '4:3' },
   { value: '2880x2880', label: '1:1' },
 ];
@@ -77,7 +77,7 @@ const RatioIcon: React.FC<{ ratio: string }> = ({ ratio }) => {
   const styles: { [key: string]: string } = {
     '9:16': 'w-4 h-7',
     '16:9': 'w-7 h-4',
-    '3:4': 'w-5 h-6',
+    '4:5': 'w-5 h-6',
     '4:3': 'w-6 h-5',
     '1:1': 'w-6 h-6',
   };
@@ -560,7 +560,7 @@ const ScreenshotGenerator: React.FC = () => {
           </div>
 
           {/* Right Column: Output */}
-          <div className="space-y-8">
+          <div className="space-y-8 lg:flex lg:flex-col">
             {socialPost && purpose === 'social-media' && (
               <div className="bg-gray-800/50 rounded-2xl shadow-xl p-6 border border-gray-700">
                 <div className="space-y-4">
@@ -586,7 +586,7 @@ const ScreenshotGenerator: React.FC = () => {
                 </div>
               </div>
             )}
-            <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col min-h-[400px] lg:min-h-full border border-gray-700">
+            <div className="bg-gray-900/50 rounded-lg p-4 flex flex-col min-h-[400px] lg:flex-grow border border-gray-700">
               {isLoading ? (
                   <div className="h-full flex-grow flex flex-col items-center justify-center text-center text-gray-400">
                       <Spinner large={true} />

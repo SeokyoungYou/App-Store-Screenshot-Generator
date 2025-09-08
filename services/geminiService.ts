@@ -43,12 +43,12 @@ export const generateTextOverlays = async (
     }
 
     prompt = `
-      You are an expert social media and App Store marketing copywriter. Based on the following feature description, create TWO sets of content:
-      1.  **For the Image:** A concise and compelling headline (max 5 words) and sub-headline (max 10 words). This text will be overlaid on the promotional image.
-      2.  **For the Post:** An engaging post caption ${platformContext}
-      
-      **CRITICAL:** The entire output must be in ${language}.
-      
+      Based on the following app feature, you will generate two types of content in ${language}.
+
+      1.  **For the Image Overlay:** As a marketing expert, write a concise, compelling headline (max 5 words) and sub-headline (max 10 words). This text will be placed directly on the promotional image.
+
+      2.  **For the Social Media Post Caption:** Switch personas. Write a post caption from the perspective of a satisfied user who has just discovered this feature. The tone should be authentic and sound like a genuine user testimonial or review, not like an advertisement. It should be positive but natural and not overly exaggerated. After the caption, generate relevant hashtags. ${platformContext}
+
       Feature Description: "${featureDescription}"
     `;
     responseSchema = {
