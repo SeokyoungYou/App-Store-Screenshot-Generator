@@ -274,12 +274,19 @@ export const generatePromotionalVideo = async (
   
   const finalPrompt = `
     Animate the device shown in the provided static promotional image.
-    The device within the image should rotate subtly in 3D space, as if in a high-end commercial.
-    The rotation should be smooth and gentle, showing off the device's form.
-    The screenshot displayed on the device's screen must remain perfectly still and fixed to the screen during the rotation.
-    The background and any text overlays from the original image must also remain completely static.
-    Do not zoom in or out. The only motion should be the 3D rotation of the device itself.
-    The goal is to create a short (5-7 second), premium, and dynamic video that brings the static image to life with this specific, subtle 3D animation.
+    
+    **CRITICAL INSTRUCTION:** The ONLY motion in the video should be a single, smooth rotation of the device mockup by approximately 20 degrees around its vertical axis. After the rotation, the device should stop.
+
+    **VIDEO FORMAT:** The final video output must have a **portrait aspect ratio of 9:16**. It should be taller than it is wide.
+
+    **STRICT CONSTRAINTS (DO NOT DEVIATE):**
+    - **No Extra Content:** DO NOT generate any new text, logos, or images. The output video must only contain the elements from the user-provided image.
+    - **Static Elements:** The on-screen UI, the background, and any text overlays from the original image must remain completely static and unchanged throughout the animation.
+    - **No Camera Movement:** DO NOT zoom in, zoom out, pan, or tilt the camera.
+    - **Single Animation:** The animation must consist ONLY of the single 20-degree device rotation.
+    - **Realistic Device Back:** As the device rotates, its back and sides must be visible. Render these parts as a realistic, unbranded smartphone back (e.g., matte glass or metal finish). DO NOT show another app screenshot or any pattern on the back of the device.
+
+    The goal is a short, premium video that animates only the device itself.
   `;
   
   let operation = await ai.models.generateVideos({
@@ -290,7 +297,8 @@ export const generatePromotionalVideo = async (
       mimeType: mimeType,
     },
     config: {
-      numberOfVideos: 1
+      numberOfVideos: 1,
+      aspectRatio: '9:16',
     }
   });
 
