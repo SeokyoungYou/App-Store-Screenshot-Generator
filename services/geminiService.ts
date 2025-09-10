@@ -273,20 +273,22 @@ export const generatePromotionalVideo = async (
   onProgress("Sending request to the video model...");
   
   const finalPrompt = `
-    Animate the device shown in the provided static promotional image.
-    
-    **CRITICAL INSTRUCTION:** The ONLY motion in the video should be a single, smooth rotation of the device mockup by approximately 20 degrees around its vertical axis. After the rotation, the device should stop.
+    Animate the device shown in the provided static promotional image. The goal is to create a short, premium video that animates ONLY the device itself.
 
-    **VIDEO FORMAT:** The final video output must have a **portrait aspect ratio of 9:16**. It should be taller than it is wide.
+    **CRITICAL ANIMATION INSTRUCTION (READ CAREFULLY):**
+    The ONLY motion permitted in the entire video is a smooth, continuous, 360-degree rotation of the device mockup in a single direction.
+    
+    1.  **Movement Type:** The device must rotate smoothly around its central vertical axis for one full 360-degree turn. It should be a one-way rotation, not back and forth.
+    2.  **Speed:** The rotation speed must be **slow and elegant**. The primary focus should be the app UI on the screen, not the device's motion. The full 360-degree rotation should take several seconds to complete, allowing the viewer to clearly see the details on the screen.
+    3.  **Smoothness:** The animation must be fluid and continuous without any jitter or sudden stops.
+
+    **VIDEO FORMAT:** The final video output must have a **portrait aspect ratio of 9:16**. It must be taller than it is wide.
 
     **STRICT CONSTRAINTS (DO NOT DEVIATE):**
-    - **No Extra Content:** DO NOT generate any new text, logos, or images. The output video must only contain the elements from the user-provided image.
-    - **Static Elements:** The on-screen UI, the background, and any text overlays from the original image must remain completely static and unchanged throughout the animation.
-    - **No Camera Movement:** DO NOT zoom in, zoom out, pan, or tilt the camera.
-    - **Single Animation:** The animation must consist ONLY of the single 20-degree device rotation.
-    - **Realistic Device Back:** As the device rotates, its back and sides must be visible. Render these parts as a realistic, unbranded smartphone back (e.g., matte glass or metal finish). DO NOT show another app screenshot or any pattern on the back of the device.
-
-    The goal is a short, premium video that animates only the device itself.
+    - **No Extra Animations:** Absolutely no other animations are allowed. The UI on the screen, the background, and all text overlays from the original image must remain completely static and motionless.
+    - **No Camera Movement:** DO NOT zoom in, zoom out, pan, or tilt the camera. The camera's position is fixed.
+    - **No Added Content:** DO NOT generate any new text, logos, or images. The video must only contain the elements from the user-provided image.
+    - **Realistic Device Back:** As the device completes its rotation, its back and sides will become fully visible. You MUST render these parts as a realistic, unbranded smartphone back (e.g., a matte glass or metal finish). **CRITICAL:** DO NOT show another app screenshot, a pattern, or a mirrored version of the front on the back of the device. It must look like the physical back of a modern phone.
   `;
   
   let operation = await ai.models.generateVideos({
