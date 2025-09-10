@@ -262,24 +262,24 @@ export const generateScreenshot = async (
  * Generates a promotional video using the VEO model.
  * @param base64Image The base64 encoded string of the source app screenshot.
  * @param mimeType The MIME type of the source image.
- * @param prompt The user's text description for the video scene.
  * @param onProgress A callback function to report progress messages to the UI.
  * @returns A promise that resolves to the downloadable URI of the generated video.
  */
 export const generatePromotionalVideo = async (
   base64Image: string,
   mimeType: string,
-  prompt: string,
   onProgress: (message: string) => void
 ): Promise<string> => {
   onProgress("Sending request to the video model...");
   
   const finalPrompt = `
-    Based on the user's app screenshot and this description, create a short (5-7 seconds), dynamic, and exciting promotional video. 
-    The video should feel like a high-energy app trailer. 
-    Focus on smooth animations, a modern aesthetic, and seamlessly integrating the UI from the screenshot.
-    The screenshot should come to life.
-    User's Description: "${prompt}"
+    Animate the device shown in the provided static promotional image.
+    The device within the image should rotate subtly in 3D space, as if in a high-end commercial.
+    The rotation should be smooth and gentle, showing off the device's form.
+    The screenshot displayed on the device's screen must remain perfectly still and fixed to the screen during the rotation.
+    The background and any text overlays from the original image must also remain completely static.
+    Do not zoom in or out. The only motion should be the 3D rotation of the device itself.
+    The goal is to create a short (5-7 second), premium, and dynamic video that brings the static image to life with this specific, subtle 3D animation.
   `;
   
   let operation = await ai.models.generateVideos({
@@ -315,35 +315,4 @@ export const generatePromotionalVideo = async (
   }
 
   return downloadLink;
-};
-
-/**
- * Enhances a user's video scene description by translating it to English
- * and adding cinematic details.
- * @param sceneDescription The user's raw description of the video scene.
- * @param language The original language of the user's description.
- * @returns A promise that resolves to the enhanced, English prompt.
- */
-export const enhanceVideoPrompt = async (
-  sceneDescription: string,
-  language: string,
-): Promise<string> => {
-  const prompt = `
-    You are an expert video director's assistant. Your task is to take a user's description for a short promotional app video and enhance it for a video generation AI.
-
-    1.  **Translate:** If the user's description is not in English, first translate it to clear, professional English. The user has specified the original language is ${language}.
-    2.  **Enhance:** Add cinematic and dynamic details. Suggest camera movements (e.g., "smooth dolly zoom in," "quick pan right," "dramatic slow-motion reveal"). Add descriptive adjectives (e.g., "vibrant," "sleek," "dynamic"). Make the scene feel more alive and exciting.
-    3.  **Format:** The output must be a single block of text. Do not use markdown, lists, or any other formatting.
-
-    **CRITICAL:** Your entire response must be ONLY the final, enhanced prompt text, ready to be passed to the video AI. Do not include any conversational text like "Here is the enhanced prompt:".
-
-    User's Description: "${sceneDescription}"
-  `;
-
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-  });
-
-  return response.text.trim();
 };
