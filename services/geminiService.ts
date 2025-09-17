@@ -1,11 +1,20 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import type { GenerateContentResponse } from "@google/genai";
 
-if (!process.env.API_KEY) {
+/**
+ * Retrieves the API key from environment variables.
+ * Throws an error if the API key is not set.
+ * @returns The API key.
+ */
+export const getApiKey = (): string => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
     throw new Error("API_KEY environment variable is not set.");
-}
+  }
+  return apiKey;
+};
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 type Purpose = 'app-store' | 'social-media' | 'og-image' | 'custom' | 'promo-video';
 

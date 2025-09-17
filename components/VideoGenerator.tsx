@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import ImageInput from './ImageInput';
 import Button from './Button';
 import Spinner from './Spinner';
-import { generatePromotionalVideo } from '../services/geminiService';
+import { generatePromotionalVideo, getApiKey } from '../services/geminiService';
 
 const fileToBase64 = (file: File): Promise<{ base64: string; mimeType: string }> => {
   return new Promise((resolve, reject) => {
@@ -46,7 +46,8 @@ const VideoGenerator: React.FC = () => {
             setVideoPreviewUrl(null);
 
             try {
-                const response = await fetch(`${generatedVideoUrl}&key=${process.env.API_KEY}`);
+                const apiKey = getApiKey();
+                const response = await fetch(`${generatedVideoUrl}&key=${apiKey}`);
                 if (!response.ok) {
                     let errorBody = `Status: ${response.status}.`;
                     try {
