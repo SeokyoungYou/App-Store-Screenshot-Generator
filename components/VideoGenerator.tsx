@@ -48,10 +48,32 @@ const VideoGenerator: React.FC = () => {
             try {
                 const response = await fetch(`${generatedVideoUrl}&key=${process.env.API_KEY}`);
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch video data: ${response.statusText}`);
+                    let errorBody = `Status: ${response.status}.`;
+                    try {
+                        const errorJson = await response.json();
+                        errorBody = errorJson.error?.message || JSON.stringify(errorJson);
+                    } catch (e) {
+                        errorBody = `${response.statusText || 'An unknown error occurred.'}`;
+                    }
+                    throw new Error(`Failed to fetch video data. ${errorBody}`);
                 }
                 
                 const blob = await response.blob();
+                
+                if (!blob.type.startsWith('video/')) {
+                    const errorText = await blob.text();
+                    let errorMessage = 'The API returned an invalid file instead of a video.';
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.error?.message || errorMessage;
+                    } catch (e) {
+                         if (errorText.length < 300) {
+                            errorMessage += ` Server response: ${errorText}`;
+                        }
+                    }
+                    throw new Error(errorMessage);
+                }
+
                 setVideoBlob(blob);
                 
                 objectUrl = window.URL.createObjectURL(blob);
@@ -180,7 +202,15 @@ const VideoGenerator: React.FC = () => {
                           </div>
                         )}
                         
-                        {videoPreviewUrl && !isPreviewLoading && (
+                        {error && !isPreviewLoading && (
+                          <div className="w-full max-w-md text-center text-red-300 bg-red-900/30 border border-red-800/50 p-4 rounded-lg">
+                           <h4 className="font-semibold mb-2">Error Loading Video</h4>
+                           <p className="text-sm break-words">{error}</p>
+                           <p className="text-xs mt-3 text-red-400">This might be due to API quota limits, a network issue, or an error from the generation service. Please check your API usage and try again.</p>
+                          </div>
+                        )}
+
+                        {videoPreviewUrl && !isPreviewLoading && !error && (
                           <>
                             <div className="w-full max-w-md rounded-lg overflow-hidden border border-gray-700 shadow-lg">
                               <video
